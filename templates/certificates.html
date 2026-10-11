@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block title %}Certificates - Student Skill Portfolio Manager{% endblock %}
+{% block breadcrumb %}Certifications & Credentials{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+  <div class="page-title-group">
+    <h1>Certifications & Credentials</h1>
+    <p>Manage and verify professional licenses, course completions, and cloud certifications.</p>
+  </div>
+  <div class="page-actions">
+    <button type="button" class="btn btn-primary" onclick="openModal('addCertModal')">
+      <i class="fa-solid fa-plus"></i>
+      <span>Add Certificate</span>
+    </button>
+  </div>
+</div>
+
+<!-- Search Bar -->
+<div class="filter-bar">
+  <div class="search-box">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <input 
+      type="text" 
+      id="certSearchInput" 
+      class="search-input" 
+      placeholder="Search certificates by title, issuing body, or credential ID..."
+      autocomplete="off"
+    >
+  </div>
+</div>
+
+<!-- Certificates Cards Grid -->
+<div class="cards-grid" id="certificatesContainer">
+  {% if certificates %}
+    {% for c in certificates %}
+      <div 
+        class="cert-card" 
+        data-id="{{ c.id }}"
+        data-title="{{ c.title }}"
+        data-issuer="{{ c.issuer }}"
+        data-credential="{{ c.credential_id }}"
+      >
+        <div class="cert-badge-row">
+          <div class="cert-issuer">
+            <i class="fa-solid fa-certificate"></i>
+            <span>{{ c.issuer }}</span>
+          </div>
+          <span class="cert-date">
+            <i class="fa-regular fa-calendar"></i>
+            <span>{{ c.issue_date }}</span>
+          </span>
+        </div>
+
+        <h3 class="cert-title">{{ c.title }}</h3>
+
+        {% if c.credential_id %}
+          <div class="cert-credential-box">
+            <span>ID: {{ c.credential_id }}</span>
+            <button 
+              type="button" 
+              class="btn btn-ghost btn-sm" 
+              style="padding: 2px 6px; font-size: 0.7rem;"
+              onclick="copyToClipboard('{{ c.credential_id }}', this)" 
+              title="Copy Credential ID"
+            >
+              <i class="fa-regular fa-copy"></i>
+            </button>
+          </div>
+        {% endif %}
+
+        <div class="cert-actions">
+          <div>
+            {% if c.url %}
+              <a href="{{ c.url }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                <span>Verify Credential</span>
+              </a>
+            {% else %}
+              <span style="font-size: 0.75rem; color: var(--text-dim); font-style: italic;">No URL attached</span>
+            {% endif %}
+          </div>
+
+          <div style="display: flex; gap: 0.5rem;">
+            <button 
+              type="button" 
+              class="btn btn-secondary btn-sm"
+              onclick="prepareEditCertificate('{{ c.id }}', '{{ c.title | replace("'", "\\'") }}', '{{ c.issuer | replace("'", "\\'") }}', '{{ c.issue_date }}', '{{ c.credential_id | replace("'", "\\'") }}', '{{ c.url | replace("'", "\\'") }}')"
+              title="Edit Certificate"
+            >
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+            <button 
+              type="button" 
+              class="btn btn-outline btn-sm" 
+              style="color: var(--accent-rose); border-color: #fecdd3;"
+              onclick="confirmDelete('certificate', '{{ c.id }}', '{{ c.title | replace("'", "\\'") }}')"
+              title="Delete Certificate"
+            >
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon-circle">
+        <i class="fa-solid fa-award"></i>
+      </div>
+      <h3 class="empty-title">No Certificates Recorded</h3>
+      <p class="empty-subtitle">Document coursework from Coursera, AWS, Meta, Udemy, or college certifications to showcase credentials.</p>
+      <button type="button" class="btn btn-primary" onclick="openModal('addCertModal')">
+        <i class="fa-solid fa-plus"></i>
+        <span>Add Your First Certificate</span>
+      </button>
+    </div>
+  {% endif %}
+
+  <!-- Hidden state for empty search filter results -->
+  <div id="noCertsFound" class="empty-state" style="display: none;">
+    <div class="empty-icon-circle" style="background: #fef2f2; color: var(--accent-rose);">
+      <i class="fa-solid fa-magnifying-glass"></i>
+    </div>
+    <h3 class="empty-title">No Matching Certificates</h3>
+    <p class="empty-subtitle">No certificate matched your search query.</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Add Certificate Modal -->
+<dialog id="addCertModal" class="modal-dialog">
+  <div class="modal-header">
+    <div class="modal-title">
+      <i class="fa-solid fa-award" style="color: var(--primary-600);"></i>
+      <span>Add Certificate</span>
+    </div>
+    <button type="button" class="modal-close-btn" onclick="closeModal('addCertModal')">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <form action="{{ url_for('add_certificate') }}" method="POST">
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="cert_title" class="form-label">Certificate Title *</label>
+        <input 
+          type="text" 
+          id="cert_title" 
+          name="title" 
+          class="form-control" 
+          placeholder="e.g., AWS Certified Cloud Practitioner" 
+          required
+        >
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="cert_issuer" class="form-label">Issuing Organization *</label>
+        <input 
+          type="text" 
+          id="cert_issuer" 
+          name="issuer" 
+          class="form-control" 
+          placeholder="e.g., Amazon Web Services, Meta, Coursera" 
+          required
+        >
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="cert_date" class="form-label">Issue Date</label>
+        <input 
+          type="date" 
+          id="cert_date" 
+          name="issue_date" 
+          class="form-control"
+        >
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="cert_cred_id" class="form-label">Credential ID</label>
+        <input 
+          type="text" 
+          id="cert_cred_id" 
+          name="credential_id" 
+          class="form-control" 
+          placeholder="e.g., AWS-CCP-109283"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="cert_url" class="form-label">Certificate / Verification URL</label>
+        <input 
+          type="url" 
+          id="cert_url" 
+          name="url" 
+          class="form-control" 
+          placeholder="https://coursera.org/verify/..."
+        >
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeModal('addCertModal')">Cancel</button>
+      <button type="submit" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i>
+        <span>Save Certificate</span>
+      </button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Edit Certificate Modal -->
+<dialog id="editCertModal" class="modal-dialog">
+  <div class="modal-header">
+    <div class="modal-title">
+      <i class="fa-solid fa-pen-to-square" style="color: var(--primary-600);"></i>
+      <span>Edit Certificate</span>
+    </div>
+    <button type="button" class="modal-close-btn" onclick="closeModal('editCertModal')">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <form id="editCertForm" method="POST">
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="edit_cert_title" class="form-label">Certificate Title *</label>
+        <input 
+          type="text" 
+          id="edit_cert_title" 
+          name="title" 
+          class="form-control" 
+          required
+        >
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="edit_cert_issuer" class="form-label">Issuing Organization *</label>
+        <input 
+          type="text" 
+          id="edit_cert_issuer" 
+          name="issuer" 
+          class="form-control" 
+          required
+        >
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="edit_cert_date" class="form-label">Issue Date</label>
+        <input 
+          type="date" 
+          id="edit_cert_date" 
+          name="issue_date" 
+          class="form-control"
+        >
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="edit_cert_credential_id" class="form-label">Credential ID</label>
+        <input 
+          type="text" 
+          id="edit_cert_credential_id" 
+          name="credential_id" 
+          class="form-control"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="edit_cert_url" class="form-label">Certificate / Verification URL</label>
+        <input 
+          type="url" 
+          id="edit_cert_url" 
+          name="url" 
+          class="form-control"
+        >
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeModal('editCertModal')">Cancel</button>
+      <button type="submit" class="btn btn-primary">
+        <i class="fa-solid fa-check"></i>
+        <span>Update Certificate</span>
+      </button>
+    </div>
+  </form>
+</dialog>
+{% endblock %}

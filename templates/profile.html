@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+
+{% block title %}Profile Settings - Student Skill Portfolio Manager{% endblock %}
+{% block breadcrumb %}Student Profile Information{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title-group">
+    <h1>Student Profile Settings</h1>
+    <p>Update personal, academic, and contact details reflected across your portfolio and PDF exports.</p>
+  </div>
+  <div class="page-actions">
+    <a href="{{ url_for('portfolio') }}" target="_blank" class="btn btn-secondary">
+      <i class="fa-solid fa-eye"></i>
+      <span>Preview Resume</span>
+    </a>
+  </div>
+</div>
+
+<div class="profile-layout">
+  <!-- Left Side: Editable Form -->
+  <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+    <!-- Profile Info Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <i class="fa-solid fa-id-card"></i>
+          <span>Academic & Personal Information</span>
+        </div>
+      </div>
+
+      <form action="{{ url_for('profile') }}" method="POST">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="name" class="form-label">Full Name *</label>
+            <input 
+              type="text" 
+              id="name" 
+              name="name" 
+              class="form-control" 
+              value="{{ profile.name if profile else '' }}" 
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="email" class="form-label">Email Address *</label>
+            <input 
+              type="email" 
+              id="email" 
+              name="email" 
+              class="form-control" 
+              value="{{ profile.email if profile else '' }}" 
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="phone" class="form-label">Phone Number</label>
+            <input 
+              type="tel" 
+              id="phone" 
+              name="phone" 
+              class="form-control" 
+              placeholder="+1 (555) 000-0000"
+              value="{{ profile.phone if profile else '' }}"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="location" class="form-label">City / Location</label>
+            <input 
+              type="text" 
+              id="location" 
+              name="location" 
+              class="form-control" 
+              placeholder="e.g., San Francisco, CA or Bangalore, India"
+              value="{{ profile.location if profile else '' }}"
+            >
+          </div>
+
+          <div class="form-group col-span-2">
+            <label for="college" class="form-label">College / University *</label>
+            <input 
+              type="text" 
+              id="college" 
+              name="college" 
+              class="form-control" 
+              value="{{ profile.college if profile else '' }}" 
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="department" class="form-label">Department</label>
+            <input 
+              type="text" 
+              id="department" 
+              name="department" 
+              class="form-control" 
+              placeholder="e.g., Computer Science & Engineering"
+              value="{{ profile.department if profile else '' }}"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="course" class="form-label">Degree / Course *</label>
+            <input 
+              type="text" 
+              id="course" 
+              name="course" 
+              class="form-control" 
+              placeholder="e.g., B.Tech in Computer Science"
+              value="{{ profile.course if profile else '' }}" 
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="graduation_year" class="form-label">Graduation Year</label>
+            <input 
+              type="text" 
+              id="graduation_year" 
+              name="graduation_year" 
+              class="form-control" 
+              placeholder="e.g., 2026"
+              value="{{ profile.graduation_year if profile else '' }}"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="github" class="form-label">GitHub Profile URL</label>
+            <input 
+              type="url" 
+              id="github" 
+              name="github" 
+              class="form-control" 
+              placeholder="https://github.com/..."
+              value="{{ profile.github if profile else '' }}"
+            >
+          </div>
+
+          <div class="form-group col-span-2">
+            <label for="linkedin" class="form-label">LinkedIn Profile URL</label>
+            <input 
+              type="url" 
+              id="linkedin" 
+              name="linkedin" 
+              class="form-control" 
+              placeholder="https://linkedin.com/in/..."
+              value="{{ profile.linkedin if profile else '' }}"
+            >
+          </div>
+
+          <div class="form-group col-span-2">
+            <label for="career_objective" class="form-label">Career Objective</label>
+            <textarea 
+              id="career_objective" 
+              name="career_objective" 
+              class="form-control" 
+              rows="3"
+              placeholder="State your professional career goals and the role you aspire to attain..."
+            >{{ profile.career_objective if profile else '' }}</textarea>
+            <span class="form-hint">Displayed prominently under your header in portfolio previews.</span>
+          </div>
+
+          <div class="form-group col-span-2">
+            <label for="profile_summary" class="form-label">Professional Summary</label>
+            <textarea 
+              id="profile_summary" 
+              name="profile_summary" 
+              class="form-control" 
+              rows="4"
+              placeholder="Provide a comprehensive summary of your strengths, engineering passion, and values..."
+            >{{ profile.profile_summary if profile else '' }}</textarea>
+          </div>
+        </div>
+
+        <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+          <button type="submit" class="btn btn-primary">
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span>Save Profile Changes</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Security & Password Change Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span>Account Security & Password</span>
+        </div>
+      </div>
+
+      <form action="{{ url_for('change_password') }}" method="POST">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="current_password" class="form-label">Current Password *</label>
+            <input 
+              type="password" 
+              id="current_password" 
+              name="current_password" 
+              class="form-control" 
+              required
+              autocomplete="current-password"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="new_password" class="form-label">New Password *</label>
+            <input 
+              type="password" 
+              id="new_password" 
+              name="new_password" 
+              class="form-control" 
+              minlength="6"
+              required
+              autocomplete="new-password"
+            >
+          </div>
+
+          <div class="form-group col-span-2">
+            <label for="confirm_password" class="form-label">Confirm New Password *</label>
+            <input 
+              type="password" 
+              id="confirm_password" 
+              name="confirm_password" 
+              class="form-control" 
+              minlength="6"
+              required
+              autocomplete="new-password"
+            >
+          </div>
+        </div>
+
+        <div style="margin-top: 1.25rem; display: flex; justify-content: flex-end;">
+          <button type="submit" class="btn btn-secondary">
+            <i class="fa-solid fa-key"></i>
+            <span>Update Password</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Right Side: Live Profile Preview Card -->
+  <div>
+    <div class="profile-preview-card">
+      <div class="preview-banner"></div>
+      <div class="preview-body">
+        <div class="preview-avatar">
+          {{ (profile.name[0] if profile and profile.name else session.get('username', 'U')[0]) | upper }}
+        </div>
+        <h3 class="preview-name">{{ profile.name if profile and profile.name else session.get('username', 'Your Name') }}</h3>
+        <div class="preview-college">{{ profile.college if profile and profile.college else 'College Not Specified' }}</div>
+        <div class="preview-degree">{{ profile.course if profile and profile.course else 'Program Not Specified' }}</div>
+        
+        <div class="preview-links">
+          {% if profile and profile.email %}
+            <a href="mailto:{{ profile.email }}" class="preview-link-btn" title="Email {{ profile.email }}">
+              <i class="fa-solid fa-envelope"></i>
+            </a>
+          {% endif %}
+          {% if profile and profile.github %}
+            <a href="{{ profile.github }}" target="_blank" class="preview-link-btn" title="GitHub">
+              <i class="fa-brands fa-github"></i>
+            </a>
+          {% endif %}
+          {% if profile and profile.linkedin %}
+            <a href="{{ profile.linkedin }}" target="_blank" class="preview-link-btn" title="LinkedIn">
+              <i class="fa-brands fa-linkedin-in"></i>
+            </a>
+          {% endif %}
+        </div>
+
+        {% if profile and profile.career_objective %}
+          <div class="preview-objective-quote">
+            "{{ profile.career_objective }}"
+          </div>
+        {% endif %}
+
+        <div style="margin-top: 1.5rem; width: 100%; border-top: 1px solid var(--border-light); padding-top: 1rem; text-align: left; font-size: 0.8rem; color: var(--text-muted);">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.35rem;">
+            <span>Graduation Year:</span>
+            <strong style="color: var(--navy-900);">{{ profile.graduation_year or 'Not specified' }}</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>Location:</span>
+            <strong style="color: var(--navy-900);">{{ profile.location or 'Not specified' }}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

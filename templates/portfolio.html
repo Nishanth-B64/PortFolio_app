@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ profile.name if profile and profile.name else 'Student' }} - Professional Skill Portfolio</title>
+  <meta name="description" content="Verified academic resume and skill portfolio of {{ profile.name if profile and profile.name else 'Student' }}.">
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Modern Stylesheet with Print rules -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body style="background-color: var(--bg-page); padding: 2rem 1rem;">
+
+  <!-- Non-printable Top Action Bar -->
+  <div class="portfolio-action-bar no-print">
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+      <i class="fa-solid fa-arrow-left"></i>
+      <span>Back to Dashboard</span>
+    </a>
+
+    <div style="display: flex; gap: 0.75rem;">
+      <a href="{{ url_for('profile') }}" class="btn btn-secondary">
+        <i class="fa-solid fa-pen"></i>
+        <span>Edit Profile</span>
+      </a>
+      <button type="button" class="btn btn-primary" onclick="window.print()">
+        <i class="fa-solid fa-print"></i>
+        <span>Print / Save as PDF</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Resume / Portfolio Document Card -->
+  <article class="portfolio-wrapper">
+    <!-- Header Banner -->
+    <header class="portfolio-header-banner">
+      <div class="portfolio-top-bar">
+        <div>
+          <h1 class="portfolio-name">{{ profile.name if profile and profile.name else 'Student Portfolio' }}</h1>
+          <div class="portfolio-role">{{ profile.course if profile and profile.course else 'Academic Portfolio' }}</div>
+          <div style="font-size: 0.95rem; color: #cbd5e1; margin-top: 0.2rem;">
+            {{ profile.college if profile and profile.college else '' }}
+            {% if profile.department and profile.college %}&bull; {% endif %}{{ profile.department if profile and profile.department else '' }}
+          </div>
+        </div>
+
+        <div class="no-print" style="text-align: right;">
+          <span style="display: inline-block; background: rgba(255, 255, 255, 0.15); padding: 0.35rem 0.85rem; border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">
+            Verified Portfolio
+          </span>
+          <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.35rem;">Updated: {{ generated_date }}</div>
+        </div>
+      </div>
+
+      <!-- Contact Info Chips -->
+      <div class="portfolio-contact-chips">
+        {% if profile.email %}
+          <div class="portfolio-chip">
+            <i class="fa-solid fa-envelope"></i>
+            <a href="mailto:{{ profile.email }}">{{ profile.email }}</a>
+          </div>
+        {% endif %}
+
+        {% if profile.phone %}
+          <div class="portfolio-chip">
+            <i class="fa-solid fa-phone"></i>
+            <span>{{ profile.phone }}</span>
+          </div>
+        {% endif %}
+
+        {% if profile.location %}
+          <div class="portfolio-chip">
+            <i class="fa-solid fa-location-dot"></i>
+            <span>{{ profile.location }}</span>
+          </div>
+        {% endif %}
+
+        {% if profile.github %}
+          <div class="portfolio-chip">
+            <i class="fa-brands fa-github"></i>
+            <a href="{{ profile.github }}" target="_blank" rel="noopener noreferrer">GitHub Profile</a>
+          </div>
+        {% endif %}
+
+        {% if profile.linkedin %}
+          <div class="portfolio-chip">
+            <i class="fa-brands fa-linkedin"></i>
+            <a href="{{ profile.linkedin }}" target="_blank" rel="noopener noreferrer">LinkedIn Profile</a>
+          </div>
+        {% endif %}
+      </div>
+    </header>
+
+    <!-- Main Content Body -->
+    <div class="portfolio-content-body">
+      
+      <!-- Career Objective -->
+      {% if profile.career_objective %}
+        <section class="portfolio-section">
+          <h2 class="portfolio-section-title">
+            <i class="fa-solid fa-bullseye"></i>
+            <span>Career Objective</span>
+          </h2>
+          <p class="portfolio-paragraph">
+            {{ profile.career_objective }}
+          </p>
+        </section>
+      {% endif %}
+
+      <!-- Professional Summary -->
+      {% if profile.profile_summary %}
+        <section class="portfolio-section">
+          <h2 class="portfolio-section-title">
+            <i class="fa-solid fa-user"></i>
+            <span>Professional Summary</span>
+          </h2>
+          <p class="portfolio-paragraph">
+            {{ profile.profile_summary }}
+          </p>
+        </section>
+      {% endif %}
+
+      <!-- Education Section -->
+      <section class="portfolio-section">
+        <h2 class="portfolio-section-title">
+          <i class="fa-solid fa-graduation-cap"></i>
+          <span>Education & Academics</span>
+        </h2>
+        <div class="portfolio-edu-card">
+          <div class="edu-school-name">{{ profile.college if profile and profile.college else 'College / University Not Specified' }}</div>
+          <div class="edu-degree">{{ profile.course if profile and profile.course else 'Degree Program Not Specified' }}</div>
+          <div class="edu-meta">
+            {% if profile.department %}{{ profile.department }} &bull; {% endif %}
+            {% if profile.graduation_year %}Class of {{ profile.graduation_year }}{% endif %}
+            {% if profile.location %}{% if profile.graduation_year %} &bull; {% endif %}{{ profile.location }}{% endif %}
+          </div>
+        </div>
+      </section>
+
+      <!-- Skills by Category Section -->
+      {% if skills_by_category %}
+        <section class="portfolio-section">
+          <h2 class="portfolio-section-title">
+            <i class="fa-solid fa-bolt"></i>
+            <span>Skills & Technical Proficiencies</span>
+          </h2>
+
+          <div class="portfolio-skills-container">
+            {% for cat_name, skill_group in skills_by_category.items() %}
+              <div class="portfolio-skill-group">
+                <div class="portfolio-group-title">
+                  <i class="fa-solid fa-check-circle" style="color: var(--primary-600); font-size: 0.8rem;"></i>
+                  <span>{{ cat_name }}</span>
+                </div>
+
+                {% for s in skill_group %}
+                  <div class="portfolio-skill-item">
+                    <div class="portfolio-skill-name-row">
+                      <span>{{ s.name }}</span>
+                      <span style="color: var(--text-muted); font-size: 0.75rem;">{{ s.proficiency }}/5</span>
+                    </div>
+                    <div class="progress-track" style="height: 5px;">
+                      <div class="progress-fill" style="width: {{ (s.proficiency / 5 * 100) | round }}%;"></div>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% endfor %}
+          </div>
+        </section>
+      {% endif %}
+
+      <!-- Projects Showcase Section -->
+      {% if projects %}
+        <section class="portfolio-section">
+          <h2 class="portfolio-section-title">
+            <i class="fa-solid fa-diagram-project"></i>
+            <span>Featured Projects</span>
+          </h2>
+
+          <div style="display: flex; flex-direction: column;">
+            {% for p in projects %}
+              <div class="portfolio-project-item">
+                <div class="portfolio-item-header">
+                  <h3 class="portfolio-item-title">{{ p.title }}</h3>
+                  {% if p.duration %}
+                    <span class="portfolio-item-sub">{{ p.duration }}</span>
+                  {% endif %}
+                </div>
+
+                <p class="portfolio-paragraph" style="margin-top: 0.25rem;">
+                  {{ p.description }}
+                </p>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;">
+                  <div style="display: flex; flex-wrap: wrap; gap: 0.35rem;">
+                    {% for tech in p.technologies.split(',') %}
+                      {% if tech.strip() %}
+                        <span class="tech-tag">{{ tech.strip() }}</span>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+
+                  <div style="display: flex; gap: 1rem; font-size: 0.825rem;">
+                    {% if p.github_url %}
+                      <a href="{{ p.github_url }}" target="_blank" rel="noopener noreferrer" style="color: var(--navy-700); font-weight: 600;">
+                        <i class="fa-brands fa-github"></i> Repository
+                      </a>
+                    {% endif %}
+                    {% if p.demo_url %}
+                      <a href="{{ p.demo_url }}" target="_blank" rel="noopener noreferrer" style="color: var(--primary-600); font-weight: 600;">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Live Demo
+                      </a>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </section>
+      {% endif %}
+
+      <!-- Certifications Section -->
+      {% if certificates %}
+        <section class="portfolio-section">
+          <h2 class="portfolio-section-title">
+            <i class="fa-solid fa-award"></i>
+            <span>Certifications & Credentials</span>
+          </h2>
+
+          <div style="display: flex; flex-direction: column;">
+            {% for c in certificates %}
+              <div class="portfolio-cert-item">
+                <div class="portfolio-item-header">
+                  <h3 class="portfolio-item-title">{{ c.title }}</h3>
+                  <span class="portfolio-item-sub">Issued: {{ c.issue_date }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; font-size: 0.85rem; color: var(--navy-700);">
+                  <span><strong>Issuing Organization:</strong> {{ c.issuer }}</span>
+                  {% if c.credential_id %}
+                    <span style="font-family: monospace; color: var(--text-muted);">Credential ID: {{ c.credential_id }}</span>
+                  {% endif %}
+                </div>
+                {% if c.url %}
+                  <div style="margin-top: 0.35rem;">
+                    <a href="{{ c.url }}" target="_blank" rel="noopener noreferrer" style="font-size: 0.8rem; color: var(--primary-600); font-weight: 600;">
+                      <i class="fa-solid fa-link"></i> Verification Link
+                    </a>
+                  </div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        </section>
+      {% endif %}
+
+    </div>
+  </article>
+
+</body>
+</html>

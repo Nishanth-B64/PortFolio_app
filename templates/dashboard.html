@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Student Skill Portfolio Manager{% endblock %}
+{% block breadcrumb %}Overview Dashboard{% endblock %}
+
+{% block content %}
+<!-- Welcome Banner with Circular Completion Meter -->
+<section class="welcome-banner">
+  <div class="welcome-content">
+    <div class="welcome-text">
+      <h2>Welcome back, {{ profile.name if profile and profile.name else session.get('username', 'Student') }}! 👋</h2>
+      <p>
+        {% if profile and profile.course %}{{ profile.course }}{% else %}Degree program not specified{% endif %}
+        {% if profile and profile.college %} &bull; {{ profile.college }}{% endif %}
+      </p>
+      {% if profile and profile.career_objective %}
+        <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #94a3b8; font-style: italic;">
+          "{{ profile.career_objective[:110] ~ '...' if profile.career_objective|length > 110 else profile.career_objective }}"
+        </p>
+      {% else %}
+        <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #cbd5e1;">
+          Welcome to your portfolio manager. Start by adding your verified skills, projects, and certificates below.
+        </p>
+      {% endif %}
+    </div>
+
+    <div class="welcome-stats-pill">
+      <div class="completion-circular" style="--progress: {{ completion_pct }};">
+        <span class="completion-pct-text">{{ completion_pct }}%</span>
+      </div>
+      <div class="welcome-pill-info">
+        <h4>Portfolio Readiness</h4>
+        <p>{{ 'Excellent! Ready for applications.' if completion_pct >= 80 else 'Complete all sections for best results.' }}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Summary Metrics Cards Grid -->
+<section class="metrics-grid">
+  <!-- Skills Card -->
+  <div class="metric-card" style="--accent-color: var(--primary-500); --icon-bg: #eff6ff; --icon-color: #2563eb;">
+    <div class="metric-icon-box">
+      <i class="fa-solid fa-bolt"></i>
+    </div>
+    <div class="metric-info">
+      <span class="metric-label">Total Skills</span>
+      <span class="metric-value">{{ total_skills }}</span>
+      <span class="metric-sub">Across 5 Categories</span>
+    </div>
+  </div>
+
+  <!-- Certificates Card -->
+  <div class="metric-card" style="--accent-color: var(--accent-emerald); --icon-bg: #ecfdf5; --icon-color: #059669;">
+    <div class="metric-icon-box">
+      <i class="fa-solid fa-award"></i>
+    </div>
+    <div class="metric-info">
+      <span class="metric-label">Certificates</span>
+      <span class="metric-value">{{ total_certificates }}</span>
+      <span class="metric-sub">Verified Credentials</span>
+    </div>
+  </div>
+
+  <!-- Projects Card -->
+  <div class="metric-card" style="--accent-color: var(--accent-purple); --icon-bg: #f5f3ff; --icon-color: #7c3aed;">
+    <div class="metric-icon-box">
+      <i class="fa-solid fa-diagram-project"></i>
+    </div>
+    <div class="metric-info">
+      <span class="metric-label">Projects</span>
+      <span class="metric-value">{{ total_projects }}</span>
+      <span class="metric-sub">Live & Repository Demos</span>
+    </div>
+  </div>
+
+  <!-- Profile Completion Card -->
+  <div class="metric-card" style="--accent-color: var(--accent-cyan); --icon-bg: #ecfeff; --icon-color: #0891b2;">
+    <div class="metric-icon-box">
+      <i class="fa-solid fa-circle-check"></i>
+    </div>
+    <div class="metric-info">
+      <span class="metric-label">Completion</span>
+      <span class="metric-value">{{ completion_pct }}%</span>
+      <span class="metric-sub">Profile Optimization</span>
+    </div>
+  </div>
+</section>
+
+<!-- Main Dashboard Grid (Left 2 cols: Checklist & Category distribution | Right 1 col: Quick Actions & Activities) -->
+<div class="dashboard-columns">
+  <!-- Left Column -->
+  <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+    <!-- Portfolio Readiness Checklist -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <i class="fa-solid fa-list-check"></i>
+          <span>Portfolio Completion Checklist</span>
+        </div>
+        <span class="badge {{ 'badge-database' if completion_pct == 100 else 'badge-tools' }}">
+          {{ completion_pct }}% Completed
+        </span>
+      </div>
+
+      <div class="checklist-grid">
+        {% for item in checklist %}
+          <div class="checklist-item {{ 'completed' if item.completed else 'pending' }}">
+            <div class="checklist-status-icon">
+              <i class="fa-solid {{ 'fa-check' if item.completed else 'fa-clock' }}"></i>
+            </div>
+            <div class="checklist-text">
+              <div class="checklist-label">{{ item.label }}</div>
+              <div class="checklist-tip">{{ item.tip }}</div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Skills Category Distribution -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <i class="fa-solid fa-chart-simple"></i>
+          <span>Skills Distribution by Category</span>
+        </div>
+        <a href="{{ url_for('skills') }}" class="btn btn-outline btn-sm">
+          <span>Manage Skills</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <div class="category-bars">
+        {% for stat in category_stats %}
+          <div class="category-bar-item">
+            <div class="category-bar-header">
+              <span class="category-bar-label">{{ stat.category }}</span>
+              <span class="category-bar-meta">
+                {{ stat.count }} skill{{ 's' if stat.count != 1 else '' }} &bull; 
+                Avg: {{ stat.avg_rating }}/5
+              </span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" style="width: {{ (stat.count / (total_skills if total_skills > 0 else 1) * 100) | round }}%;"></div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Featured Recent Projects -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <i class="fa-solid fa-laptop-code"></i>
+          <span>Featured Projects</span>
+        </div>
+        <a href="{{ url_for('projects') }}" class="btn btn-secondary btn-sm">
+          <span>View All ({{ total_projects }})</span>
+        </a>
+      </div>
+
+      {% if recent_projects %}
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          {% for p in recent_projects %}
+            <div style="padding: 1rem; border-radius: var(--radius-md); background: var(--bg-surface-alt); border: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+              <div>
+                <h4 style="font-size: 1rem; font-weight: 700; color: var(--navy-900);">{{ p.title }}</h4>
+                <p style="font-size: 0.825rem; color: var(--text-muted); margin-top: 0.2rem;">
+                  {{ p.description[:110] ~ '...' if p.description|length > 110 else p.description }}
+                </p>
+                <div style="margin-top: 0.4rem; display: flex; gap: 0.35rem; flex-wrap: wrap;">
+                  {% for t in p.technologies.split(',')[:3] %}
+                    <span class="tech-tag" style="font-size: 0.7rem;">{{ t.strip() }}</span>
+                  {% endfor %}
+                </div>
+              </div>
+              <div style="display: flex; gap: 0.5rem;">
+                {% if p.github_url %}
+                  <a href="{{ p.github_url }}" target="_blank" class="btn btn-secondary btn-sm" title="View Source">
+                    <i class="fa-brands fa-github"></i>
+                  </a>
+                {% endif %}
+                {% if p.demo_url %}
+                  <a href="{{ p.demo_url }}" target="_blank" class="btn btn-primary btn-sm" title="Live Preview">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+          <p>No projects added yet.</p>
+          <a href="{{ url_for('projects') }}" class="btn btn-primary btn-sm" style="margin-top: 0.5rem;">Add First Project</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Right Column -->
+  <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+    <!-- Quick Actions Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+          <span>Quick Actions</span>
+        </div>
+      </div>
+
+      <div class="quick-actions-list">
+        <a href="{{ url_for('skills') }}" class="quick-action-btn">
+          <i class="fa-solid fa-plus-circle" style="color: var(--primary-600);"></i>
+          <span>Add New Skill</span>
+        </a>
+        <a href="{{ url_for('certificates') }}" class="quick-action-btn">
+          <i class="fa-solid fa-certificate" style="color: var(--accent-emerald);"></i>
+          <span>Add Certificate</span>
+        </a>
+        <a href="{{ url_for('projects') }}" class="quick-action-btn">
+          <i class="fa-solid fa-folder-plus" style="color: var(--accent-purple);"></i>
+          <span>Add Project Showcase</span>
+        </a>
+        <a href="{{ url_for('profile') }}" class="quick-action-btn">
+          <i class="fa-solid fa-user-pen" style="color: var(--accent-amber);"></i>
+          <span>Update Student Profile</span>
+        </a>
+        <a href="{{ url_for('portfolio') }}" target="_blank" class="quick-action-btn" style="background: var(--primary-50); border-color: var(--primary-100); color: var(--primary-600);">
+          <i class="fa-solid fa-print"></i>
+          <span>Generate Resume / Portfolio</span>
+        </a>
+        <a href="{{ url_for('register') }}" class="quick-action-btn" style="background: #f0fdf4; border: 1.5px dashed #86efac; color: #166534;">
+          <i class="fa-solid fa-user-plus" style="color: #16a34a;"></i>
+          <span>Register New Student Account</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Recent Activities Timeline -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <i class="fa-solid fa-timeline"></i>
+          <span>Recent Activity</span>
+        </div>
+        {% if activities %}
+          <form action="{{ url_for('clear_activities') }}" method="POST" style="margin: 0;">
+            <button type="submit" class="btn btn-ghost btn-sm" style="font-size: 0.75rem;" title="Clear activity history">
+              Clear
+            </button>
+          </form>
+        {% endif %}
+      </div>
+
+      {% if activities %}
+        <div class="activity-feed">
+          {% for act in activities %}
+            <div class="activity-item type-{{ act.type }}">
+              <div class="activity-icon-badge">
+                {% if act.type == 'skill' %}
+                  <i class="fa-solid fa-bolt"></i>
+                {% elif act.type == 'certificate' %}
+                  <i class="fa-solid fa-award"></i>
+                {% elif act.type == 'project' %}
+                  <i class="fa-solid fa-diagram-project"></i>
+                {% elif act.type == 'profile' %}
+                  <i class="fa-solid fa-user-check"></i>
+                {% else %}
+                  <i class="fa-solid fa-bell"></i>
+                {% endif %}
+              </div>
+              <div class="activity-body">
+                <div class="activity-text">{{ act.text }}</div>
+                <div class="activity-time">{{ act.timestamp }}</div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div style="text-align: center; padding: 2rem 1rem; color: var(--text-dim); font-size: 0.85rem;">
+          No recent activity logged.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

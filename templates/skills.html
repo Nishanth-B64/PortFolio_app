@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}Skills Management - Student Skill Portfolio Manager{% endblock %}
+{% block breadcrumb %}Skills & Competencies{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+  <div class="page-title-group">
+    <h1>Skills & Proficiency</h1>
+    <p>Document technical proficiencies, tools, and interpersonal strengths with verified rating levels.</p>
+  </div>
+  <div class="page-actions">
+    <button type="button" class="btn btn-primary" onclick="openModal('addSkillModal')">
+      <i class="fa-solid fa-plus"></i>
+      <span>Add New Skill</span>
+    </button>
+  </div>
+</div>
+
+<!-- Search & Category Filter Bar -->
+<div class="filter-bar">
+  <div class="search-box">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <input 
+      type="text" 
+      id="skillSearchInput" 
+      class="search-input" 
+      placeholder="Search skills by name or category..."
+      autocomplete="off"
+    >
+  </div>
+
+  <div class="filter-pills skills-filter-pills">
+    <button type="button" class="filter-pill active" data-category="all">All Skills</button>
+    {% for cat in categories %}
+      <button type="button" class="filter-pill" data-category="{{ cat }}">{{ cat }}</button>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Skills Cards Grid -->
+<div class="cards-grid" id="skillsContainer">
+  {% if skills %}
+    {% for s in skills %}
+      <div 
+        class="skill-card" 
+        data-id="{{ s.id }}" 
+        data-name="{{ s.name }}" 
+        data-category="{{ s.category }}"
+        data-proficiency="{{ s.proficiency }}"
+      >
+        <div class="skill-card-top">
+          <div>
+            <h3 class="skill-name">{{ s.name }}</h3>
+            <span style="font-size: 0.75rem; color: var(--text-dim);">Updated: {{ s.updated_at }}</span>
+          </div>
+          {% set cat_slug = s.category | lower | replace(' ', '-') %}
+          <span class="badge badge-{{ cat_slug if cat_slug in ['programming', 'web-development', 'database', 'tools', 'soft-skills'] else 'default' }}">
+            {{ s.category }}
+          </span>
+        </div>
+
+        <!-- Proficiency Meter -->
+        <div class="proficiency-display">
+          <div class="proficiency-header">
+            <div class="rating-stars">
+              {% for i in range(1, 6) %}
+                <i class="fa-solid fa-star {{ '' if i <= s.proficiency else 'star-empty' }}"></i>
+              {% endfor %}
+            </div>
+            <span class="proficiency-text">{{ s.proficiency }} / 5 Level</span>
+          </div>
+
+          <div class="progress-track" style="height: 6px;">
+            <div class="progress-fill" style="width: {{ (s.proficiency / 5 * 100) | round }}%;"></div>
+          </div>
+        </div>
+
+        <!-- Card Actions -->
+        <div class="skill-card-actions">
+          <button 
+            type="button" 
+            class="btn btn-secondary btn-sm" 
+            onclick="prepareEditSkill('{{ s.id }}', '{{ s.name | replace("'", "\\'") }}', '{{ s.category }}', {{ s.proficiency }})"
+            title="Edit Skill"
+          >
+            <i class="fa-solid fa-pen-to-square"></i>
+            <span>Edit</span>
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-outline btn-sm" 
+            style="color: var(--accent-rose); border-color: #fecdd3;" 
+            onclick="confirmDelete('skill', '{{ s.id }}', '{{ s.name | replace("'", "\\'") }}')"
+            title="Delete Skill"
+          >
+            <i class="fa-solid fa-trash-can"></i>
+            <span>Delete</span>
+          </button>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon-circle">
+        <i class="fa-solid fa-bolt"></i>
+      </div>
+      <h3 class="empty-title">No Skills Added Yet</h3>
+      <p class="empty-subtitle">Categorize and showcase your proficiencies in programming, tools, databases, and communication.</p>
+      <button type="button" class="btn btn-primary" onclick="openModal('addSkillModal')">
+        <i class="fa-solid fa-plus"></i>
+        <span>Add Your First Skill</span>
+      </button>
+    </div>
+  {% endif %}
+
+  <!-- Hidden state for empty search filter results -->
+  <div id="noSkillsFound" class="empty-state" style="display: none;">
+    <div class="empty-icon-circle" style="background: #fef2f2; color: var(--accent-rose);">
+      <i class="fa-solid fa-magnifying-glass"></i>
+    </div>
+    <h3 class="empty-title">No Matching Skills</h3>
+    <p class="empty-subtitle">We couldn't find any skill matching your current search or category filter.</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Add Skill Modal -->
+<dialog id="addSkillModal" class="modal-dialog">
+  <div class="modal-header">
+    <div class="modal-title">
+      <i class="fa-solid fa-bolt" style="color: var(--primary-600);"></i>
+      <span>Add New Skill</span>
+    </div>
+    <button type="button" class="modal-close-btn" onclick="closeModal('addSkillModal')">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <form action="{{ url_for('add_skill') }}" method="POST">
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="skill_name" class="form-label">Skill Name *</label>
+        <input 
+          type="text" 
+          id="skill_name" 
+          name="name" 
+          class="form-control" 
+          placeholder="e.g., Python & Flask, React.js, PostgreSQL" 
+          required
+        >
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="skill_category" class="form-label">Category *</label>
+        <select id="skill_category" name="category" class="form-control" required>
+          {% for cat in categories %}
+            <option value="{{ cat }}">{{ cat }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="skill_proficiency" class="form-label">Proficiency Level (1 - 5) *</label>
+        <select id="skill_proficiency" name="proficiency" class="form-control" required>
+          <option value="5">5 - Expert / Advanced (Industry standard)</option>
+          <option value="4" selected>4 - Proficient (Hands-on projects)</option>
+          <option value="3">3 - Intermediate (Good foundational knowledge)</option>
+          <option value="2">2 - Basic (Familiar with core concepts)</option>
+          <option value="1">1 - Beginner (Exploring / Learning)</option>
+        </select>
+        <span class="form-hint">Displayed as visual rating indicator on your resume preview.</span>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeModal('addSkillModal')">Cancel</button>
+      <button type="submit" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i>
+        <span>Save Skill</span>
+      </button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Edit Skill Modal -->
+<dialog id="editSkillModal" class="modal-dialog">
+  <div class="modal-header">
+    <div class="modal-title">
+      <i class="fa-solid fa-pen-to-square" style="color: var(--primary-600);"></i>
+      <span>Edit Skill</span>
+    </div>
+    <button type="button" class="modal-close-btn" onclick="closeModal('editSkillModal')">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <form id="editSkillForm" method="POST">
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="edit_skill_name" class="form-label">Skill Name *</label>
+        <input 
+          type="text" 
+          id="edit_skill_name" 
+          name="name" 
+          class="form-control" 
+          required
+        >
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="edit_skill_category" class="form-label">Category *</label>
+        <select id="edit_skill_category" name="category" class="form-control" required>
+          {% for cat in categories %}
+            <option value="{{ cat }}">{{ cat }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="edit_skill_proficiency" class="form-label">Proficiency Level (1 - 5) *</label>
+        <select id="edit_skill_proficiency" name="proficiency" class="form-control" required>
+          <option value="5">5 - Expert / Advanced</option>
+          <option value="4">4 - Proficient</option>
+          <option value="3">3 - Intermediate</option>
+          <option value="2">2 - Basic</option>
+          <option value="1">1 - Beginner</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeModal('editSkillModal')">Cancel</button>
+      <button type="submit" class="btn btn-primary">
+        <i class="fa-solid fa-check"></i>
+        <span>Update Skill</span>
+      </button>
+    </div>
+  </form>
+</dialog>
+{% endblock %}

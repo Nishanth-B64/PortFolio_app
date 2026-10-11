@@ -1,0 +1,326 @@
+{% extends "base.html" %}
+
+{% block title %}Projects - Student Skill Portfolio Manager{% endblock %}
+{% block breadcrumb %}Projects Showcase{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+  <div class="page-title-group">
+    <h1>Project Showcase</h1>
+    <p>Document capstone assignments, open-source repositories, and software applications with live URLs.</p>
+  </div>
+  <div class="page-actions">
+    <button type="button" class="btn btn-primary" onclick="openModal('addProjectModal')">
+      <i class="fa-solid fa-plus"></i>
+      <span>Add Project</span>
+    </button>
+  </div>
+</div>
+
+<!-- Controls Bar: Search & Sorting -->
+<div class="filter-bar">
+  <div class="search-box">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <input 
+      type="text" 
+      id="projectSearchInput" 
+      class="search-input" 
+      placeholder="Search projects by title, tech stack, or description..."
+      autocomplete="off"
+    >
+  </div>
+
+  <div style="display: flex; align-items: center; gap: 0.75rem;">
+    <label for="projectSortSelect" style="font-size: 0.85rem; font-weight: 600; color: var(--navy-800);">Sort by:</label>
+    <select id="projectSortSelect" class="sort-select">
+      <option value="newest" selected>Newest Added</option>
+      <option value="oldest">Oldest Added</option>
+      <option value="title-asc">Title: A &rarr; Z</option>
+      <option value="title-desc">Title: Z &rarr; A</option>
+    </select>
+  </div>
+</div>
+
+<!-- Projects Cards Grid -->
+<div class="cards-grid" id="projectsContainer">
+  {% if projects %}
+    {% for p in projects %}
+      <div 
+        class="project-card"
+        data-id="{{ p.id }}"
+        data-title="{{ p.title }}"
+        data-desc="{{ p.description }}"
+        data-tech="{{ p.technologies }}"
+        data-date="{{ p.created_at }}"
+      >
+        {% if p.duration %}
+          <div class="project-duration-chip">
+            <i class="fa-regular fa-clock"></i>
+            <span>{{ p.duration }}</span>
+          </div>
+        {% endif %}
+
+        <h3 class="project-title">{{ p.title }}</h3>
+        <p class="project-desc">{{ p.description }}</p>
+
+        <!-- Tech tags -->
+        <div class="project-tech-tags">
+          {% for t in p.technologies.split(',') %}
+            {% if t.strip() %}
+              <span class="tech-tag">{{ t.strip() }}</span>
+            {% endif %}
+          {% endfor %}
+        </div>
+
+        <div class="project-card-footer">
+          <div class="project-links">
+            {% if p.github_url %}
+              <a href="{{ p.github_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" title="GitHub Repository">
+                <i class="fa-brands fa-github"></i>
+                <span>Code</span>
+              </a>
+            {% endif %}
+            {% if p.demo_url %}
+              <a href="{{ p.demo_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" title="Live Interactive Demo">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                <span>Live Demo</span>
+              </a>
+            {% endif %}
+          </div>
+
+          <div style="display: flex; gap: 0.5rem;">
+            <button 
+              type="button" 
+              class="btn btn-secondary btn-sm"
+              onclick="prepareEditProject('{{ p.id }}', '{{ p.title | replace("'", "\\'") }}', '{{ p.description | replace("'", "\\'") }}', '{{ p.technologies | replace("'", "\\'") }}', '{{ p.duration | replace("'", "\\'") }}', '{{ p.github_url | replace("'", "\\'") }}', '{{ p.demo_url | replace("'", "\\'") }}')"
+              title="Edit Project"
+            >
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+            <button 
+              type="button" 
+              class="btn btn-outline btn-sm" 
+              style="color: var(--accent-rose); border-color: #fecdd3;"
+              onclick="confirmDelete('project', '{{ p.id }}', '{{ p.title | replace("'", "\\'") }}')"
+              title="Delete Project"
+            >
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon-circle">
+        <i class="fa-solid fa-diagram-project"></i>
+      </div>
+      <h3 class="empty-title">No Projects Showcase Yet</h3>
+      <p class="empty-subtitle">Highlight academic capstones, hackathon submissions, and personal coding projects to prove your engineering skills.</p>
+      <button type="button" class="btn btn-primary" onclick="openModal('addProjectModal')">
+        <i class="fa-solid fa-plus"></i>
+        <span>Add Your First Project</span>
+      </button>
+    </div>
+  {% endif %}
+
+  <!-- Hidden state for empty search filter results -->
+  <div id="noProjectsFound" class="empty-state" style="display: none;">
+    <div class="empty-icon-circle" style="background: #fef2f2; color: var(--accent-rose);">
+      <i class="fa-solid fa-magnifying-glass"></i>
+    </div>
+    <h3 class="empty-title">No Matching Projects</h3>
+    <p class="empty-subtitle">We couldn't find any project matching your search criteria.</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Add Project Modal -->
+<dialog id="addProjectModal" class="modal-dialog">
+  <div class="modal-header">
+    <div class="modal-title">
+      <i class="fa-solid fa-folder-plus" style="color: var(--primary-600);"></i>
+      <span>Add Project Showcase</span>
+    </div>
+    <button type="button" class="modal-close-btn" onclick="closeModal('addProjectModal')">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <form action="{{ url_for('add_project') }}" method="POST">
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="project_title" class="form-label">Project Title *</label>
+        <input 
+          type="text" 
+          id="project_title" 
+          name="title" 
+          class="form-control" 
+          placeholder="e.g., Campus Event Manager" 
+          required
+        >
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="project_desc" class="form-label">Description *</label>
+        <textarea 
+          id="project_desc" 
+          name="description" 
+          class="form-control" 
+          rows="3"
+          placeholder="Summarize the core problem solved, architectural highlights, and outcomes..."
+          required
+        ></textarea>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="project_tech" class="form-label">Technologies Used *</label>
+        <input 
+          type="text" 
+          id="project_tech" 
+          name="technologies" 
+          class="form-control" 
+          placeholder="e.g., Python, Flask, HTML5, CSS3, JavaScript (comma-separated)" 
+          required
+        >
+        <span class="form-hint">Separate multiple technologies with commas.</span>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="project_duration" class="form-label">Project Duration</label>
+        <input 
+          type="text" 
+          id="project_duration" 
+          name="duration" 
+          class="form-control" 
+          placeholder="e.g., 2 Months (Aug - Sep 2026)"
+        >
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="project_github" class="form-label">GitHub Repository URL</label>
+          <input 
+            type="url" 
+            id="project_github" 
+            name="github_url" 
+            class="form-control" 
+            placeholder="https://github.com/..."
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="project_demo" class="form-label">Live Demo URL</label>
+          <input 
+            type="url" 
+            id="project_demo" 
+            name="demo_url" 
+            class="form-control" 
+            placeholder="https://..."
+          >
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeModal('addProjectModal')">Cancel</button>
+      <button type="submit" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i>
+        <span>Save Project</span>
+      </button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Edit Project Modal -->
+<dialog id="editProjectModal" class="modal-dialog">
+  <div class="modal-header">
+    <div class="modal-title">
+      <i class="fa-solid fa-pen-to-square" style="color: var(--primary-600);"></i>
+      <span>Edit Project</span>
+    </div>
+    <button type="button" class="modal-close-btn" onclick="closeModal('editProjectModal')">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <form id="editProjectForm" method="POST">
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="edit_project_title" class="form-label">Project Title *</label>
+        <input 
+          type="text" 
+          id="edit_project_title" 
+          name="title" 
+          class="form-control" 
+          required
+        >
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="edit_project_desc" class="form-label">Description *</label>
+        <textarea 
+          id="edit_project_desc" 
+          name="description" 
+          class="form-control" 
+          rows="3"
+          required
+        ></textarea>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="edit_project_tech" class="form-label">Technologies Used *</label>
+        <input 
+          type="text" 
+          id="edit_project_tech" 
+          name="technologies" 
+          class="form-control" 
+          required
+        >
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="edit_project_duration" class="form-label">Project Duration</label>
+        <input 
+          type="text" 
+          id="edit_project_duration" 
+          name="duration" 
+          class="form-control"
+        >
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="edit_project_github" class="form-label">GitHub URL</label>
+          <input 
+            type="url" 
+            id="edit_project_github" 
+            name="github_url" 
+            class="form-control"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="edit_project_demo" class="form-label">Live Demo URL</label>
+          <input 
+            type="url" 
+            id="edit_project_demo" 
+            name="demo_url" 
+            class="form-control"
+          >
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeModal('editProjectModal')">Cancel</button>
+      <button type="submit" class="btn btn-primary">
+        <i class="fa-solid fa-check"></i>
+        <span>Update Project</span>
+      </button>
+    </div>
+  </form>
+</dialog>
+{% endblock %}

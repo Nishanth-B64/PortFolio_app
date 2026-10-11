@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Student Skill Portfolio Manager{% endblock %}</title>
+  <meta name="description" content="Maintain your verified skills, certificates, projects, and generate professional portfolios for internships and placements.">
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Custom Modern Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <div class="app-wrapper">
+    <!-- Sidebar Navigation -->
+    <aside class="app-sidebar">
+      <div class="sidebar-header">
+        <div class="brand-icon-box">
+          <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <div class="brand-titles">
+          <span class="brand-title">Skill Portfolio</span>
+          <span class="brand-badge">Student Portal</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">Main Menu</div>
+        <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+          <i class="fa-solid fa-gauge-high"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="{{ url_for('skills') }}" class="nav-link {% if request.endpoint == 'skills' %}active{% endif %}">
+          <i class="fa-solid fa-bolt"></i>
+          <span>Skills & Ratings</span>
+        </a>
+        <a href="{{ url_for('certificates') }}" class="nav-link {% if request.endpoint == 'certificates' %}active{% endif %}">
+          <i class="fa-solid fa-award"></i>
+          <span>Certificates</span>
+        </a>
+        <a href="{{ url_for('projects') }}" class="nav-link {% if request.endpoint == 'projects' %}active{% endif %}">
+          <i class="fa-solid fa-diagram-project"></i>
+          <span>Projects</span>
+        </a>
+
+        <div class="nav-section-title">Portfolio & Account</div>
+        <a href="{{ url_for('portfolio') }}" class="nav-link {% if request.endpoint == 'portfolio' %}active{% endif %}" target="_blank">
+          <i class="fa-solid fa-id-card-clip"></i>
+          <span>Portfolio Preview</span>
+        </a>
+        <a href="{{ url_for('profile') }}" class="nav-link {% if request.endpoint == 'profile' %}active{% endif %}">
+          <i class="fa-solid fa-user-gear"></i>
+          <span>Profile Settings</span>
+        </a>
+        <a href="{{ url_for('register') }}" class="nav-link {% if request.endpoint == 'register' %}active{% endif %}">
+          <i class="fa-solid fa-user-plus"></i>
+          <span>Register New Student</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-user-card">
+          <div class="user-avatar">
+            {{ (profile.name[0] if profile and profile.name else session.get('username', 'S')[0]) | upper }}
+          </div>
+          <div class="user-info">
+            <div class="user-name" title="{{ profile.name if profile and profile.name else session.get('username', 'Student') }}">
+              {{ profile.name if profile and profile.name else session.get('username', 'Student') }}
+            </div>
+            <div class="user-role">Active Account</div>
+          </div>
+          <a href="{{ url_for('logout') }}" class="logout-btn-mini" title="Sign Out">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+          </a>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Shell -->
+    <div class="app-main">
+      <!-- Top Navigation Bar -->
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <button class="mobile-menu-toggle" aria-label="Toggle navigation menu">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <div class="topbar-breadcrumb">
+            <span>Portfolio Manager</span>
+            <span class="separator"><i class="fa-solid fa-chevron-right" style="font-size: 0.7rem;"></i></span>
+            <span class="current">{% block breadcrumb %}Dashboard{% endblock %}</span>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <a href="{{ url_for('register') }}" class="btn btn-secondary btn-sm" title="Register New Student Account">
+            <i class="fa-solid fa-user-plus"></i>
+            <span>Register New User</span>
+          </a>
+          <a href="{{ url_for('portfolio') }}" class="btn btn-primary btn-sm" target="_blank" title="View live portfolio document">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            <span>View Portfolio</span>
+          </a>
+          <a href="{{ url_for('logout') }}" class="btn btn-secondary btn-sm" title="Sign Out">
+            <i class="fa-solid fa-power-off"></i>
+            <span>Logout</span>
+          </a>
+        </div>
+      </header>
+
+      <!-- Viewport Content -->
+      <main class="app-content">
+        <!-- Flash Alert Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-messages">
+              {% for category, message in messages %}
+                <div class="alert alert-{{ category if category != 'danger' else 'danger' }}">
+                  <div class="alert-content">
+                    {% if category == 'success' %}
+                      <i class="fa-solid fa-circle-check"></i>
+                    {% elif category == 'danger' %}
+                      <i class="fa-solid fa-circle-exclamation"></i>
+                    {% elif category == 'warning' %}
+                      <i class="fa-solid fa-triangle-exclamation"></i>
+                    {% else %}
+                      <i class="fa-solid fa-circle-info"></i>
+                    {% endif %}
+                    <span>{{ message }}</span>
+                  </div>
+                  <button type="button" class="alert-close" aria-label="Close notification">
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+
+  <!-- Shared Global Delete Confirmation Modal -->
+  <dialog id="confirmDeleteModal" class="modal-dialog">
+    <div class="modal-header">
+      <div class="modal-title">
+        <i class="fa-solid fa-triangle-exclamation" style="color: var(--accent-rose);"></i>
+        <span>Confirm Deletion</span>
+      </div>
+      <button type="button" class="modal-close-btn" onclick="closeModal('confirmDeleteModal')">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <form id="deleteItemForm" method="POST">
+      <div class="modal-body">
+        <p style="font-size: 0.95rem; color: var(--navy-800); margin-bottom: 0.75rem;">
+          Are you sure you want to delete this <span id="deleteItemType" style="font-weight: 700;">record</span>?
+        </p>
+        <p style="font-size: 0.9rem; color: var(--text-muted); background: var(--bg-surface-alt); padding: 0.75rem 1rem; border-radius: var(--radius-sm); border-left: 3px solid var(--accent-rose);">
+          <strong id="deleteItemName" style="color: var(--navy-900);"></strong> will be permanently removed from your portfolio database.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('confirmDeleteModal')">Cancel</button>
+        <button type="submit" class="btn btn-danger">
+          <i class="fa-solid fa-trash-can"></i>
+          <span>Delete Record</span>
+        </button>
+      </div>
+    </form>
+  </dialog>
+
+  {% block modals %}{% endblock %}
+
+  <!-- Core JavaScript -->
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>
