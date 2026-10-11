@@ -16,7 +16,7 @@
 <body>
   <div class="app-wrapper">
     <!-- Sidebar Navigation -->
-    <aside class="app-sidebar">
+    <aside class="app-sidebar" id="appSidebar">
       <div class="sidebar-header">
         <div class="brand-icon-box">
           <i class="fa-solid fa-graduation-cap"></i>
@@ -84,7 +84,7 @@
       <!-- Top Navigation Bar -->
       <header class="app-topbar">
         <div class="topbar-left">
-          <button class="mobile-menu-toggle" aria-label="Toggle navigation menu">
+          <button class="mobile-menu-toggle" type="button" aria-label="Toggle navigation menu" aria-controls="appSidebar" aria-expanded="false">
             <i class="fa-solid fa-bars"></i>
           </button>
           <div class="topbar-breadcrumb">
@@ -95,15 +95,15 @@
         </div>
 
         <div class="topbar-right">
-          <a href="{{ url_for('register') }}" class="btn btn-secondary btn-sm" title="Register New Student Account">
+          <a href="{{ url_for('register') }}" class="btn btn-secondary btn-sm" title="Register New Student Account" aria-label="Register New Student Account">
             <i class="fa-solid fa-user-plus"></i>
             <span>Register New User</span>
           </a>
-          <a href="{{ url_for('portfolio') }}" class="btn btn-primary btn-sm" target="_blank" title="View live portfolio document">
+          <a href="{{ url_for('portfolio') }}" class="btn btn-primary btn-sm" target="_blank" title="View live portfolio document" aria-label="View Portfolio">
             <i class="fa-solid fa-arrow-up-right-from-square"></i>
             <span>View Portfolio</span>
           </a>
-          <a href="{{ url_for('logout') }}" class="btn btn-secondary btn-sm" title="Sign Out">
+          <a href="{{ url_for('logout') }}" class="btn btn-secondary btn-sm" title="Sign Out" aria-label="Logout">
             <i class="fa-solid fa-power-off"></i>
             <span>Logout</span>
           </a>

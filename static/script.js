@@ -19,14 +19,27 @@ function initMobileMenu() {
   const sidebar = document.querySelector('.app-sidebar');
 
   if (toggleBtn && sidebar) {
+    const closeMenu = () => {
+      sidebar.classList.remove('open');
+      toggleBtn.setAttribute('aria-expanded', 'false');
+    };
+
     toggleBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      sidebar.classList.toggle('open');
+      const isOpen = sidebar.classList.toggle('open');
+      toggleBtn.setAttribute('aria-expanded', String(isOpen));
     });
 
     document.addEventListener('click', (e) => {
       if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && e.target !== toggleBtn) {
-        sidebar.classList.remove('open');
+        closeMenu();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && sidebar.classList.contains('open')) {
+        closeMenu();
+        toggleBtn.focus();
       }
     });
   }
